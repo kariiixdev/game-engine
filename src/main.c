@@ -7,8 +7,7 @@ const u32 SCREEN_WIDTH = 640U;
 const u32 SCREEN_HEIGHT = 480U;
 const u32 SHADER_BUFFER_SIZE = 255U;
 
-// TODO: Improve the loadShader function
-void loadShader()
+char *loadShader()
 {
     // Open the shader source file
     FILE *fptr = fopen("../../shaders/shader.vert", "r");
@@ -16,19 +15,30 @@ void loadShader()
         exit(1);
     else
     {
-        char buffer[SHADER_BUFFER_SIZE]; // Array to hold the entire shader source code as a string
-        char c = 0;                      // Temporary variable to store each character read from the shader source code
-        u32 i = 0;                       // Index variable to track the position while iterating through the shader source code
-
-        // Read the contents of the shader source
-        while ((c = fgetc(fptr)) != EOF)
+        // Dynamically allocate memory for the buffer
+        char *buffer = (char *)malloc(SHADER_BUFFER_SIZE);
+        if (buffer == NULL)
         {
-            // Ensure we don't overflow the buffer
-            if (i < SHADER_BUFFER_SIZE - 1)
-                buffer[i++] = c;
+            fclose(fptr);
+            exit(1);
         }
-        buffer[i] = '\0'; // Null-terminate the string
-        fclose(fptr);     // Close the file
+        else
+        {
+            char c = 0; // Temporary variable to store each character read from the shader source code
+            u32 i = 0;  // Index variable to track the position while iterating through the shader source code
+
+            // Read the contents of the shader source
+            while ((c = fgetc(fptr)) != EOF)
+            {
+                // Ensure we don't overflow the buffer
+                if (i < SHADER_BUFFER_SIZE - 1)
+                    buffer[i++] = c;
+            }
+            buffer[i] = '\0'; // Null-terminate the string
+            fclose(fptr);     // Close the file
+
+            return buffer;
+        }
     }
 }
 
@@ -66,7 +76,6 @@ int main(int argc, char *argv[])
                 // Game loop
                 SDL_Event e;
                 SDL_bool shouldClose;
-                loadShader();
                 while (!shouldClose)
                 {
                     // Poll events
