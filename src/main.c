@@ -1,4 +1,5 @@
 #include "SDL.h"
+#include <GL/glew.h>
 #include <GL/gl.h>
 
 typedef uint32_t u32;
@@ -68,26 +69,33 @@ int main(int argc, char *argv[])
         else
         {
             // OpenGL context initialization
-            SDL_GLContext *glContext = SDL_GL_CreateContext(window);
+            SDL_GLContext glContext = SDL_GL_CreateContext(window);
             if (glContext == NULL)
                 exit(-1);
+
+            // Make the OpenGL context current
+            SDL_GL_MakeCurrent(window, glContext);
+
+            // Initialize GLEW
+            if (glewInit() != GLEW_OK)
+                exit(EXIT_FAILURE);
             else
             {
                 // Game loop
                 SDL_Event e;
-                SDL_bool shouldClose;
+                SDL_bool shouldClose = SDL_FALSE;
                 while (!shouldClose)
                 {
                     // Poll events
                     while (SDL_PollEvent(&e) != 0)
                     {
-                        glClearColor(1.f, 0.f, 0.f, 1.f); // Set the screen color to red
-                        glClear(GL_COLOR_BUFFER_BIT);     // Clear screen
-                        SDL_GL_SwapWindow(window);        // Swap buffers
-
                         if (e.type == SDL_QUIT)
                             shouldClose = SDL_TRUE; // Exit the program if user wants
                     }
+
+                    glClearColor(1.f, 0.f, 0.f, 1.f); // Set the screen color to red
+                    glClear(GL_COLOR_BUFFER_BIT);     // Clear screen
+                    SDL_GL_SwapWindow(window);        // Swap buffers
                 }
             }
         }
