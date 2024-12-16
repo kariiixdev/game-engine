@@ -36,8 +36,7 @@ const char *loadShader(const char *shaderPath)
                 if (i < SHADER_BUFFER_SIZE - 1)
                     buffer[i++] = c;
             }
-            buffer[i] = '\0'; // Null-terminate the string
-            fclose(fptr);     // Close the file
+            fclose(fptr); // Close the file
 
             return buffer;
         }
@@ -52,15 +51,23 @@ int main(int argc, char *argv[])
     else
     {
         // Set OpenGL attributes
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
         // Predefined vertices for drawing triangle
         f32 verts[] = {
             -.5f, -.5f * (f32)sqrt(3) / 3, .0f,
             .5f, -.5f * (f32)sqrt(3) / 3, .0f,
-            .0f, .5f * (f32)sqrt(3) * 2 / 3, .0f};
+            .0f, .5f * (f32)sqrt(3) * 2 / 3, .0f,
+            -.5f / 2, .5f * (f32)sqrt(3) / 6, .0f,
+            .5f / 2, .5f * (f32)sqrt(3) / 6, .0f,
+            .0f, -.5f * (f32)sqrt(3) / 3, .0f};
+
+        u32 indices[] = {
+            0, 3, 5,
+            3, 2, 4,
+            5, 4, 1};
 
         // SDL window creation
         SDL_Window *window = SDL_CreateWindow(
@@ -98,7 +105,7 @@ int main(int argc, char *argv[])
                 u32 shaderProgram = glCreateProgram();
 
                 // Vertex buffer and array objects
-                u32 VBO, VAO;
+                u32 VBO, VAO, EBO;
 
                 // Load the shaders source code
                 const char *vertShaderSrc = loadShader("../../shaders/shader.vert");
@@ -123,16 +130,19 @@ int main(int argc, char *argv[])
                 glDeleteShader(vertShader);
                 glDeleteShader(fragShader);
 
-                // Generate vertex buffer and array objects
+                // Generate vertex buffer, index buffer and array objects
                 glGenVertexArrays(1, &VAO);
                 glGenBuffers(1, &VBO);
+                glGenBuffers(1, &EBO);
 
                 // Bind vertex objects
                 glBindVertexArray(VAO);
                 glBindBuffer(GL_ARRAY_BUFFER, VBO);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
-                // Create and initialize a buffer object data store
+                // Create and initialize a buffer objects data store
                 glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
                 // Define an array of generic vertex attribute data and enable it
                 glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void *)0);
@@ -141,6 +151,7 @@ int main(int argc, char *argv[])
                 // Bind a vertex array object
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
                 glBindVertexArray(0);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
                 // Game loop
                 while (!shouldClose)
@@ -153,17 +164,18 @@ int main(int argc, char *argv[])
                             shouldClose = SDL_TRUE;
                     }
 
-                    glClearColor(0.f, 0.f, 1.f, 1.f); // Set the screen color to blue
-                    glClear(GL_COLOR_BUFFER_BIT);     // Clear screen
-                    glUseProgram(shaderProgram);      // Use defined shader program
-                    glBindVertexArray(VAO);           // Bind vertex array object
-                    glDrawArrays(GL_TRIANGLES, 0, 3); // Draw Triangle to the screen
-                    SDL_GL_SwapWindow(window);        // Swap buffers
+                    glClearColor(0.f, 0.f, 1.f, 1.f);                    // Set the screen color to blue
+                    glClear(GL_COLOR_BUFFER_BIT);                        // Clear screen
+                    glUseProgram(shaderProgram);                         // Use defined shader program
+                    glBindVertexArray(VAO);                              // Bind vertex array object
+                    glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0); // Draw Triangle to the screen
+                    SDL_GL_SwapWindow(window);                           // Swap buffers
                 }
 
-                // Delete the VAO, VBO and shaderProgram
+                // Delete the VAO, buffer objects and shaderProgram
                 glDeleteVertexArrays(1, &VAO);
                 glDeleteBuffers(1, &VBO);
+                glDeleteBuffers(1, &EBO);
                 glDeleteProgram(shaderProgram);
             }
         }
